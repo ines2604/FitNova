@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "frontend",
+    "slug": "frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "com.anonymous.frontend",
+    "userInterfaceStyle": "automatic",
+    "ios": {},
+    "android": {
+      "package": "com.anonymous.frontend",
+      "minSdkVersion": 26,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
+      ]
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FitNova a besoin d'accéder à vos photos pour modifier votre photo de profil."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/logo.png",
+          "color": "#407BFF"
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "FitNova a besoin d'accéder à vos données de mouvement pour compter vos pas et estimer les calories brûlées."
+        }
+      ],
+      "react-native-health-connect",
+      "./plugins/withMinSdkVersion"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "51aa7fb1-6706-48b6-9795-17d97180dadc"
+      }
+    },
+    "owner": "inesjaziri2026"
+  }
+}
