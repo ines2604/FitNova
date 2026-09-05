@@ -63,7 +63,7 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 
 ### 💬 Chatbot santé/fitness
 - Conversations multiples avec historique
-- Renommage et suppression de conversations
+- Suppression de conversations
 - Réponses contextualisées grâce à l'IA (Google Gemini)
 
 ### 👤 Profil & suivi long terme
@@ -73,7 +73,7 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 - Édition de profil et de photo
 
 ### 🔔 Rappels
-- Création de rappels personnalisés (fréquence, jours actifs, heure)
+- Activation de rappels personnalisés (fréquence, jours actifs, heure)
 - Notifications locales (Expo Notifications)
 
 ---
