@@ -338,6 +338,3 @@ EXPO_PUBLIC_API_URL
 ## 👩‍💻 Auteure
  
 Projet développé par **Ines Jaziri** dans le cadre du développement de l'application mobile **FitNova**.
-
-
-Projet développé par **Ines Jaziri** dans le cadre du développement de l'application mobile **FitNova**.
