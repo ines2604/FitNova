@@ -1,5 +1,6 @@
 import api from "./api";
 import { saveSession, clearSession, StoredUser } from "../utils/storage";
+import { cancelAllNotifications } from "./notifications.service";
 
 export type OtpType = "email_verification" | "password_reset";
 
@@ -68,5 +69,12 @@ export const resetPassword = async (userId: number, code: string, newPassword: s
 
 // ---- Déconnexion locale ----------------------------------------------------
 export const logout = async () => {
+  // Les notifications sont programmées localement sur le téléphone : il faut
+  // les annuler explicitement, sinon elles continuent après la déconnexion.
+  try {
+    await cancelAllNotifications();
+  } catch (error) {
+    console.warn("Impossible d'annuler les notifications à la déconnexion :", error);
+  }
   await clearSession();
 };

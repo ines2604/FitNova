@@ -19,7 +19,7 @@ import {
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import Chip from "@/components/nutrition/Chip";
@@ -34,6 +34,7 @@ import {
 } from "@/services/openFoodFacts.service";
 
 import { FoodProduct, FoodSortBy } from "@/types/nutrition";
+import { MealType, MEAL_TYPE_LABELS } from "@/types/meal";
 
 // Nombre d'aliments affichés à l'ouverture et lors du rafraîchissement
 const RANDOM_POOL_SIZE = 50;
@@ -62,6 +63,9 @@ const SORT_OPTIONS: {
 
 export default function NutritionFoodsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mealType?: MealType; date?: string }>();
+  const mealType = params.mealType as MealType | undefined;
+  const targetDate = params.date;
 
   // =========================
   // RECHERCHE
@@ -256,6 +260,7 @@ export default function NutritionFoodsScreen() {
       pathname: "/nutrition-food-details",
       params: {
         barcode: food.id,
+        ...(mealType ? { mealType, date: targetDate } : {}),
       },
     });
   };
@@ -270,6 +275,12 @@ export default function NutritionFoodsScreen() {
       edges={["top"]}
     >
       <ScreenHeader title="Aliments" />
+
+      {mealType ? (
+        <Text style={styles.mealTypeHint}>
+          Ajout au repas : {MEAL_TYPE_LABELS[mealType]}
+        </Text>
+      ) : null}
 
       {/* =========================
           BARRE DE RECHERCHE
@@ -533,6 +544,7 @@ export default function NutritionFoodsScreen() {
               renderItem={({ item }) => (
                 <FoodListItem
                   food={item}
+                  showFavorite
                   onPress={() =>
                     openFoodDetails(item)
                   }
@@ -559,6 +571,7 @@ export default function NutritionFoodsScreen() {
           renderItem={({ item }) => (
             <FoodListItem
               food={item}
+              showFavorite
               onPress={() =>
                 openFoodDetails(item)
               }
@@ -578,6 +591,16 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#F4F7FF",
+  },
+
+  mealTypeHint: {
+    marginTop: 4,
+    marginBottom: 4,
+    marginHorizontal: 16,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#407BFF",
+    textAlign: "center",
   },
 
   searchBar: {

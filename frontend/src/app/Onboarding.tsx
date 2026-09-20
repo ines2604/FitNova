@@ -10,7 +10,9 @@ interface Slides {
     id: string;
     title: string;
     description: string;
-    image: any;
+    image?: any;
+    icon?: string;
+    color?: string;
 }
 
 const Onboarding = () => {

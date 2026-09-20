@@ -8,20 +8,37 @@ import {
   ActivityIndicator,
   Pressable,
   Linking,
+  TextInput,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import EmptyState from "@/components/nutrition/EmptyState";
+import FavoriteButton from "@/components/nutrition/FavoriteButton";
 import { getMealById } from "@/services/theMealDb.service";
 import { MealDetail } from "@/types/nutrition";
+import { addMeal } from "@/services/meals.service";
+import { MealType, MEAL_TYPE_LABELS } from "@/types/meal";
 
 export default function NutritionMealDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, mealType, date } = useLocalSearchParams<{
+    id: string;
+    mealType?: MealType;
+    date?: string;
+  }>();
   const [meal, setMeal] = useState<MealDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
+  const [addingToTracking, setAddingToTracking] = useState(false);
+  const [addedToTracking, setAddedToTracking] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -44,9 +61,53 @@ export default function NutritionMealDetailsScreen() {
     }, [load])
   );
 
+  const handleAddToTracking = async () => {
+    if (!meal || !mealType || addingToTracking) return;
+    const caloriesValue = parseInt(calories, 10);
+    if (!caloriesValue || caloriesValue <= 0) {
+      Alert.alert("Champ manquant", "Indique le nombre de calories de la portion.");
+      return;
+    }
+    setAddingToTracking(true);
+    try {
+      await addMeal({
+        date: date || undefined,
+        mealType,
+        name: meal.name,
+        imageUrl: meal.thumbnail,
+        calories: caloriesValue,
+        protein: protein ? parseFloat(protein) : null,
+        carbs: carbs ? parseFloat(carbs) : null,
+        fat: fat ? parseFloat(fat) : null,
+        source: "manual",
+      } as any);
+      setAddedToTracking(true);
+      setShowAddForm(false);
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message || "Impossible d'ajouter ce repas");
+    } finally {
+      setAddingToTracking(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
-      <ScreenHeader title="Détails du repas" />
+      <ScreenHeader
+        title="Détails du repas"
+        rightElement={
+          meal ? (
+            <FavoriteButton
+              item={{
+                itemType: "recipe",
+                refId: meal.id,
+                name: meal.name,
+                imageUrl: meal.thumbnail,
+                source: "repas",
+              }}
+            />
+          ) : undefined
+        }
+      />
 
       {loading ? (
         <View style={styles.centered}>
@@ -65,6 +126,92 @@ export default function NutritionMealDetailsScreen() {
           )}
 
           <Text style={styles.name}>{meal.name}</Text>
+
+          {mealType ? (
+            <View style={styles.addSection}>
+              <Text style={styles.mealTypeHint}>
+                Ajout au repas : {MEAL_TYPE_LABELS[mealType]}
+              </Text>
+
+              {!showAddForm && !addedToTracking ? (
+                <Pressable
+                  style={styles.addTrackingBtn}
+                  onPress={() => setShowAddForm(true)}
+                >
+                  <Ionicons name="add-circle-outline" size={18} color="#fff" />
+                  <Text style={styles.addTrackingBtnText}>Ajouter à mon suivi</Text>
+                </Pressable>
+              ) : null}
+
+              {addedToTracking ? (
+                <View style={[styles.addTrackingBtn, styles.addTrackingBtnDone]}>
+                  <Ionicons name="checkmark" size={18} color="#fff" />
+                  <Text style={styles.addTrackingBtnText}>Ajouté au suivi</Text>
+                </View>
+              ) : null}
+
+              {showAddForm ? (
+                <View style={styles.addForm}>
+                  <Text style={styles.addFormHint}>
+                    TheMealDB ne fournit pas les calories : indique celles de ta portion.
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Calories (kcal)"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    value={calories}
+                    onChangeText={(t) => setCalories(t.replace(/[^0-9]/g, ""))}
+                  />
+                  <View style={styles.macroRow}>
+                    <TextInput
+                      style={[styles.input, styles.macroInput]}
+                      placeholder="Protéines g"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="decimal-pad"
+                      value={protein}
+                      onChangeText={setProtein}
+                    />
+                    <TextInput
+                      style={[styles.input, styles.macroInput]}
+                      placeholder="Glucides g"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="decimal-pad"
+                      value={carbs}
+                      onChangeText={setCarbs}
+                    />
+                    <TextInput
+                      style={[styles.input, styles.macroInput]}
+                      placeholder="Lipides g"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="decimal-pad"
+                      value={fat}
+                      onChangeText={setFat}
+                    />
+                  </View>
+                  <View style={styles.addFormActions}>
+                    <Pressable
+                      style={styles.cancelBtn}
+                      onPress={() => setShowAddForm(false)}
+                    >
+                      <Text style={styles.cancelBtnText}>Annuler</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.saveBtn, addingToTracking && styles.saveBtnDisabled]}
+                      onPress={handleAddToTracking}
+                      disabled={addingToTracking}
+                    >
+                      {addingToTracking ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.saveBtnText}>Confirmer</Text>
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
           <View style={styles.tags}>
             {meal.category ? (
@@ -162,6 +309,92 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#1E293B",
     marginBottom: 10,
+  },
+  addSection: {
+    marginBottom: 16,
+  },
+  mealTypeHint: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#407BFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  addTrackingBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 14,
+    backgroundColor: "#407BFF",
+  },
+  addTrackingBtnDone: {
+    backgroundColor: "#1E8F4E",
+  },
+  addTrackingBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  addForm: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 10,
+    gap: 10,
+  },
+  addFormHint: {
+    fontSize: 12,
+    color: "#94A3B8",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#1E293B",
+  },
+  macroRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  macroInput: {
+    flex: 1,
+  },
+  addFormActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 2,
+  },
+  cancelBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: "#F1F5F9",
+  },
+  cancelBtnText: {
+    color: "#475569",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  saveBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: "#407BFF",
+  },
+  saveBtnDisabled: {
+    opacity: 0.6,
+  },
+  saveBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
   tags: {
     flexDirection: "row",

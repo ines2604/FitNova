@@ -63,6 +63,18 @@ export default function AddMealSheet({ visible, mealType, date, onClose, onAdded
     router.push({ pathname: "/nutrition-meal-scanner", params: { mealType, date } });
   };
 
+  const goToFoodSearch = () => {
+    if (!mealType) return;
+    handleClose();
+    router.push({ pathname: "/nutrition-foods", params: { mealType, date } });
+  };
+
+  const goToMealSearch = () => {
+    if (!mealType) return;
+    handleClose();
+    router.push({ pathname: "/nutrition-meals", params: { mealType, date } });
+  };
+
   const handleManualSave = async () => {
     if (!mealType || saving) return;
     const caloriesValue = parseInt(calories, 10);
@@ -130,6 +142,16 @@ export default function AddMealSheet({ visible, mealType, date, onClose, onAdded
                 <View style={{ flex: 1 }}>
                   <Text style={styles.optionTitle}>Prendre une photo</Text>
                   <Text style={styles.optionSubtitle}>Analyse IA de ton assiette</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.textFaint} />
+              </Pressable>
+
+              <Pressable style={styles.optionRow} onPress={goToFoodSearch}>
+                <View style={styles.optionIcon}>
+                  <Ionicons name="search-outline" size={20} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.optionTitle}>Rechercher un aliment</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={COLORS.textFaint} />
               </Pressable>

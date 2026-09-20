@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import EmptyState from "@/components/nutrition/EmptyState";
+import FavoriteButton from "@/components/nutrition/FavoriteButton";
 import { getScanHistoryEntry } from "@/services/scanHistory.service";
 import { getServerBaseUrl } from "@/services/api";
 import { ScanHistoryEntry } from "@/types/nutrition";
@@ -68,7 +69,31 @@ export default function NutritionScanDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
-      <ScreenHeader title="Détails de l'analyse" />
+      <ScreenHeader
+        title="Détails de l'analyse"
+        rightElement={
+          entry ? (
+            <FavoriteButton
+              item={{
+                itemType: "food",
+                // Référence stable pour que l'état du cœur (rempli/vide) soit
+                // correctement vérifié au chargement, même pour un scan photo
+                // qui n'a pas de code-barres : on utilise l'id de l'historique.
+                refId:
+                  entry.scan_type === "barcode" ? entry.barcode : `scan:${entry.id}`,
+                name: entry.title,
+                imageUrl: entry.image_url,
+                calories: entry.calories,
+                protein: entry.protein,
+                carbs: entry.carbs,
+                fat: entry.fat,
+                nutriScore: entry.nutri_score,
+                source: entry.scan_type === "barcode" ? "barcode" : "photo",
+              }}
+            />
+          ) : undefined
+        }
+      />
 
       {loading ? (
         <View style={styles.centered}>

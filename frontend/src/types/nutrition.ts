@@ -96,6 +96,8 @@ export type MealScanResult = {
   totalFat: number;
   confidence: MealScanConfidence;
   note: string;
+  /** Id de l'entrée créée dans l'historique des scans (sert de référence stable pour les favoris). */
+  scanHistoryId?: number | null;
 };
 
 // ---- Historique des repas analysés (photo + code-barres) ----

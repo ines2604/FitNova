@@ -23,6 +23,35 @@ const toPublicUser = (user) => ({
   emailVerified: !!user.email_verified,
 });
 
+// Réponse d'échec d'une vérification de code OTP.
+//  - limite d'essais dépassée -> 429 (Too Many Requests) + Retry-After
+//  - code faux ou expiré      -> 400, avec le nombre d'essais restants
+const sendOtpFailure = (res, result) => {
+  const minutes = Math.max(1, Math.ceil(result.retryAfterSeconds / 60));
+  const waitText = `${minutes} minute${minutes > 1 ? "s" : ""}`;
+
+  if (result.status === "locked") {
+    res.set("Retry-After", String(result.retryAfterSeconds));
+    return res.status(429).json({
+      message: `Trop de tentatives. Réessayez dans ${waitText}.`,
+      retryAfterSeconds: result.retryAfterSeconds,
+    });
+  }
+
+  const message =
+    result.attemptsLeft > 0
+      ? `Code invalide ou expiré. Il vous reste ${result.attemptsLeft} essai${
+          result.attemptsLeft > 1 ? "s" : ""
+        }.`
+      : `Code invalide ou expiré. Nombre maximal d'essais atteint, réessayez dans ${waitText}.`;
+
+  return res.status(400).json({
+    message,
+    attemptsLeft: result.attemptsLeft,
+    retryAfterSeconds: result.retryAfterSeconds,
+  });
+};
+
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
@@ -73,9 +102,9 @@ const verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "userId et code sont requis" });
     }
 
-    const isValid = await otpService.verifyOtp(userId, code, "email_verification");
-    if (!isValid) {
-      return res.status(400).json({ message: "Code invalide ou expiré" });
+    const otpResult = await otpService.verifyOtp(userId, code, "email_verification");
+    if (otpResult.status !== "valid") {
+      return sendOtpFailure(res, otpResult);
     }
 
     await userModel.markEmailAsVerified(userId);
@@ -241,9 +270,9 @@ const verifyResetOtp = async (req, res) => {
       return res.status(400).json({ message: "userId et code sont requis" });
     }
 
-    const isValid = await otpService.checkOtpValidity(userId, code, "password_reset");
-    if (!isValid) {
-      return res.status(400).json({ message: "Code invalide ou expiré" });
+    const otpResult = await otpService.checkOtpValidity(userId, code, "password_reset");
+    if (otpResult.status !== "valid") {
+      return sendOtpFailure(res, otpResult);
     }
 
     res.status(200).json({ message: "Code valide" });
@@ -267,9 +296,9 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const isValid = await otpService.verifyOtp(userId, code, "password_reset");
-    if (!isValid) {
-      return res.status(400).json({ message: "Code invalide ou expiré" });
+    const otpResult = await otpService.verifyOtp(userId, code, "password_reset");
+    if (otpResult.status !== "valid") {
+      return sendOtpFailure(res, otpResult);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

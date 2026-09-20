@@ -15,6 +15,8 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from "expo-camera";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import NutriScoreBadge from "@/components/nutrition/NutriScoreBadge";
+import FavoriteButton from "@/components/nutrition/FavoriteButton";
+import PortionPicker from "@/components/nutrition/PortionPicker";
 import { getProductByBarcode } from "@/services/openFoodFacts.service";
 import {
   getScanHistory,
@@ -24,6 +26,7 @@ import { addMeal } from "@/services/meals.service";
 import { MealType, MEAL_TYPE_LABELS } from "@/types/meal";
 import { getServerBaseUrl } from "@/services/api";
 import { FoodProduct, ScanHistoryEntry } from "@/types/nutrition";
+import { DEFAULT_PORTION_GRAMS, portionMealName, scaleNutrition } from "@/utils/portion";
 
 const SCANNED_BARCODE_TYPES = ["ean13", "ean8", "upc_a", "upc_e", "code128", "code39"];
 
@@ -55,6 +58,8 @@ export default function NutritionScannerScreen() {
   const [product, setProduct] = useState<FoodProduct | null>(null);
   const [addingToTracking, setAddingToTracking] = useState(false);
   const [addedToTracking, setAddedToTracking] = useState(false);
+  // Quantité mangée (en grammes) : les valeurs Open Food Facts sont « pour 100 g ».
+  const [grams, setGrams] = useState(DEFAULT_PORTION_GRAMS);
   const lockRef = useRef(false);
 
   const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
@@ -85,6 +90,7 @@ export default function NutritionScannerScreen() {
     setLoading(true);
     setError("");
     setProduct(null);
+    setGrams(DEFAULT_PORTION_GRAMS);
 
     try {
       const found = await getProductByBarcode(result.data);
@@ -112,6 +118,7 @@ export default function NutritionScannerScreen() {
     setError("");
     setScanning(true);
     setAddedToTracking(false);
+    setGrams(DEFAULT_PORTION_GRAMS);
     lockRef.current = false;
   };
 
@@ -119,15 +126,17 @@ export default function NutritionScannerScreen() {
     if (!product || !mealType || addingToTracking) return;
     setAddingToTracking(true);
     try {
+      // Calories et macros de la portion choisie (et non plus de 100 g).
+      const portion = scaleNutrition(product, grams);
       await addMeal({
         date: targetDate || undefined,
         mealType,
-        name: product.name,
+        name: portionMealName(product.name, grams),
         imageUrl: product.imageUrl,
-        calories: Math.round(product.caloriesPer100g || 0),
-        protein: product.proteinPer100g,
-        carbs: product.carbsPer100g,
-        fat: product.fatPer100g,
+        calories: portion.calories,
+        protein: portion.protein,
+        carbs: portion.carbs,
+        fat: portion.fat,
         source: "barcode",
         barcode: product.id,
       } as any);
@@ -234,6 +243,21 @@ export default function NutritionScannerScreen() {
                 </Text>
               </View>
               <NutriScoreBadge score={product.nutriScore} />
+              <FavoriteButton
+                style={styles.favoriteBtn}
+                item={{
+                  itemType: "food",
+                  refId: product.id,
+                  name: product.name,
+                  imageUrl: product.imageUrl,
+                  calories: product.caloriesPer100g,
+                  protein: product.proteinPer100g,
+                  carbs: product.carbsPer100g,
+                  fat: product.fatPer100g,
+                  nutriScore: product.nutriScore,
+                  source: "barcode",
+                }}
+              />
             </View>
 
             <View style={styles.resultActions}>
@@ -245,7 +269,7 @@ export default function NutritionScannerScreen() {
                 onPress={() =>
                   router.push({
                     pathname: "/nutrition-food-details",
-                    params: { barcode: product.id },
+                    params: { barcode: product.id, source: "barcode" },
                   })
                 }
               >
@@ -254,26 +278,35 @@ export default function NutritionScannerScreen() {
             </View>
 
             {mealType ? (
-              <Pressable
-                style={[styles.addTrackingBtn, addedToTracking && styles.addTrackingBtnDone]}
-                onPress={handleAddToTracking}
-                disabled={addingToTracking || addedToTracking}
-              >
-                {addingToTracking ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons
-                      name={addedToTracking ? "checkmark" : "add-circle-outline"}
-                      size={18}
-                      color="#fff"
-                    />
-                    <Text style={styles.addTrackingBtnText}>
-                      {addedToTracking ? "Ajouté au suivi" : "Ajouter à mon suivi"}
-                    </Text>
-                  </>
-                )}
-              </Pressable>
+              <>
+                <PortionPicker
+                  product={product}
+                  grams={grams}
+                  onChange={setGrams}
+                  disabled={addingToTracking || addedToTracking}
+                  variant="inline"
+                />
+                <Pressable
+                  style={[styles.addTrackingBtn, addedToTracking && styles.addTrackingBtnDone]}
+                  onPress={handleAddToTracking}
+                  disabled={addingToTracking || addedToTracking}
+                >
+                  {addingToTracking ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name={addedToTracking ? "checkmark" : "add-circle-outline"}
+                        size={18}
+                        color="#fff"
+                      />
+                      <Text style={styles.addTrackingBtnText}>
+                        {addedToTracking ? "Ajouté au suivi" : "Ajouter à mon suivi"}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              </>
             ) : null}
           </View>
         ) : null}
@@ -301,7 +334,7 @@ export default function NutritionScannerScreen() {
                     entry.barcode &&
                     router.push({
                       pathname: "/nutrition-food-details",
-                      params: { barcode: entry.barcode },
+                      params: { barcode: entry.barcode, source: "barcode" },
                     })
                   }
                 >
@@ -429,6 +462,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
+  },
+  favoriteBtn: {
+    marginLeft: 10,
   },
   resultImage: {
     width: 52,

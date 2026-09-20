@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import Chip from "@/components/nutrition/Chip";
 import MealListItem from "@/components/nutrition/MealListItem";
@@ -28,6 +28,7 @@ import {
   searchMealsByName,
 } from "@/services/theMealDb.service";
 import { MealCategory, MealSearchMode, MealSummary } from "@/types/nutrition";
+import { MealType as TrackingMealType, MEAL_TYPE_LABELS } from "@/types/meal";
 
 const RANDOM_POOL_SIZE = 50;
 
@@ -40,6 +41,9 @@ const MODES: { value: MealSearchMode; label: string; icon: keyof typeof Ionicons
 
 export default function NutritionMealsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mealType?: TrackingMealType; date?: string }>();
+  const trackingMealType = params.mealType as TrackingMealType | undefined;
+  const targetDate = params.date;
   const [mode, setMode] = useState<MealSearchMode>("name");
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 450);
@@ -143,7 +147,13 @@ export default function NutritionMealsScreen() {
   }, [runSearch]);
 
   const openMealDetails = (meal: MealSummary) => {
-    router.push({ pathname: "/nutrition-meal-details", params: { id: meal.id } });
+    router.push({
+      pathname: "/nutrition-meal-details",
+      params: {
+        id: meal.id,
+        ...(trackingMealType ? { mealType: trackingMealType, date: targetDate } : {}),
+      },
+    });
   };
 
   const handleRandom = async () => {
@@ -172,6 +182,12 @@ export default function NutritionMealsScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <ScreenHeader title="Repas" />
+
+      {trackingMealType ? (
+        <Text style={styles.mealTypeHint}>
+          Ajout au repas : {MEAL_TYPE_LABELS[trackingMealType]}
+        </Text>
+      ) : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modesRow}>
         {MODES.map((m) => (
@@ -270,7 +286,7 @@ export default function NutritionMealsScreen() {
               keyExtractor={(item, index) => item.id || String(index)}
               contentContainerStyle={styles.list}
               renderItem={({ item }) => (
-                <MealListItem meal={item} onPress={() => openMealDetails(item)} />
+                <MealListItem meal={item} showFavorite onPress={() => openMealDetails(item)} />
               )}
             />
           )}
@@ -283,7 +299,7 @@ export default function NutritionMealsScreen() {
           keyExtractor={(item, index) => item.id || String(index)}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <MealListItem meal={item} onPress={() => openMealDetails(item)} />
+            <MealListItem meal={item} showFavorite onPress={() => openMealDetails(item)} />
           )}
         />
       )}
@@ -295,6 +311,15 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#F4F7FF",
+  },
+  mealTypeHint: {
+    marginHorizontal: 16,
+    marginTop: 2,
+    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#407BFF",
+    textAlign: "center",
   },
   modesRow: {
     paddingHorizontal: 16,

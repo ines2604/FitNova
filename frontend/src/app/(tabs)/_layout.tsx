@@ -56,6 +56,8 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="Home" />
       <Tabs.Screen name="nutrition" />
+      <Tabs.Screen name="fasting" />
+      <Tabs.Screen name="workouts" />
       <Tabs.Screen name="chatbot" />
       <Tabs.Screen name="profile" />
     </Tabs>

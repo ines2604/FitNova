@@ -47,7 +47,8 @@
         }
       ],
       "react-native-health-connect",
-      "./plugins/withMinSdkVersion"
+      "./plugins/withMinSdkVersion",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -25,6 +25,8 @@ const COLORS = {
 const ICONS = {
   Home: 'home-sharp',
   nutrition: 'nutrition',
+  fasting: 'hourglass',
+  workouts: 'barbell',
   chatbot: 'chatbubble-ellipses',
   profile: 'person-circle',
 };
@@ -32,6 +34,8 @@ const ICONS = {
 const LABELS = {
   Home: 'Accueil',
   nutrition: 'Nutrition',
+  fasting: 'Jeûne',
+  workouts: 'Sport',
   chatbot: 'Chatbot',
   profile: 'Profil',
 };

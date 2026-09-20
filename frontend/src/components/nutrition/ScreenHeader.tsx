@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -9,6 +9,8 @@ type Props = {
   onBack?: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightPress?: () => void;
+  /** Élément personnalisé affiché à droite (prioritaire sur rightIcon). */
+  rightElement?: ReactNode;
 };
 
 export default function ScreenHeader({
@@ -17,6 +19,7 @@ export default function ScreenHeader({
   onBack,
   rightIcon,
   onRightPress,
+  rightElement,
 }: Props) {
   const router = useRouter();
 
@@ -39,7 +42,9 @@ export default function ScreenHeader({
           </Text>
         ) : null}
       </View>
-      {rightIcon && onRightPress ? (
+      {rightElement ? (
+        <View style={styles.backBtn}>{rightElement}</View>
+      ) : rightIcon && onRightPress ? (
         <Pressable onPress={onRightPress} style={styles.backBtn} hitSlop={8}>
           <Ionicons name={rightIcon} size={22} color="#1E293B" />
         </Pressable>

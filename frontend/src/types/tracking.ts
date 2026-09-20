@@ -4,6 +4,7 @@ export type DailyTracking = {
   date: string;
   calories_consumed: number;
   calories_burned: number;
+  workout_calories_burned?: number;
   steps: number;
   water_intake_ml: number;
   sleep_duration_minutes: number | null;

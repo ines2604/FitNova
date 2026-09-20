@@ -24,8 +24,13 @@ import { DashboardData } from "@/types/dashboard";
 import { getUploadUrl } from "@/utils/media";
 import { updateStoredUser } from "@/utils/storage";
 import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
-import WeightProgressChart from "@/components/profile/WeightProgressChart";
 import DailyStatsCalendar from "@/components/profile/DailyStatsCalendar";
+
+// Fenêtre de récupération du suivi quotidien : assez large pour couvrir le
+// filtre "cette année" (jusqu'à 366 jours) proposé sur les graphiques du
+// profil. Le graphique de poids, lui, reçoit tout l'historique quel que
+// soit ce paramètre (l'API ne filtre pas weightProgress par date).
+const DASHBOARD_DAYS_FETCH = 370;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -42,7 +47,7 @@ export default function ProfileScreen() {
       const [userData, profileData, dashboardData] = await Promise.all([
         getMe(),
         getProfile(),
-        getDashboard(31),
+        getDashboard(DASHBOARD_DAYS_FETCH),
       ]);
       setUser(userData);
       setProfile(profileData);
@@ -186,11 +191,40 @@ export default function ProfileScreen() {
 
         {profile ? <ProfileInfoCard profile={profile} /> : null}
 
+        <Pressable
+          style={styles.statsBtn}
+          onPress={() => router.push("/Stats")}
+        >
+          <View style={styles.statsBtnIcon}>
+            <Ionicons name="stats-chart" size={20} color="#407BFF" />
+          </View>
+          <View style={styles.statsBtnText}>
+            <Text style={styles.statsBtnTitle}>Mes statistiques</Text>
+            <Text style={styles.statsBtnSubtitle}>
+              Courbes d'évolution du poids, des calories et des pas
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+        </Pressable>
+
+        <Pressable
+          style={styles.statsBtn}
+          onPress={() => router.push("/progress-photos")}
+        >
+          <View style={styles.statsBtnIcon}>
+            <Ionicons name="body-outline" size={20} color="#407BFF" />
+          </View>
+          <View style={styles.statsBtnText}>
+            <Text style={styles.statsBtnTitle}>Photos de progression</Text>
+            <Text style={styles.statsBtnSubtitle}>
+              Suis ton évolution physique dans le temps
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+        </Pressable>
+
         {dashboard ? (
-          <>
-            <WeightProgressChart data={dashboard.weightProgress} />
-            <DailyStatsCalendar dailyStats={dashboard.dailyStats} />
-          </>
+          <DailyStatsCalendar dailyStats={dashboard.dailyStats} />
         ) : null}
 
         <Pressable
@@ -339,6 +373,41 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     color: "#C2410C",
+    marginTop: 2,
+  },
+  statsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  statsBtnIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#EFF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  statsBtnText: {
+    flex: 1,
+  },
+  statsBtnTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  statsBtnSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
     marginTop: 2,
   },
   primaryBtn: {

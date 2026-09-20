@@ -18,13 +18,16 @@ const scanMeal = async (req, res) => {
     // Enregistre automatiquement l'analyse dans l'historique des repas
     // scannés. On ne bloque jamais la réponse si cet enregistrement
     // échoue : ce n'est pas critique pour l'utilisateur à cet instant.
+    // On renvoie l'id créé au frontend afin qu'il puisse servir de
+    // référence stable pour le bouton favoris (voir favorite.model.js).
+    let scanHistoryId = null;
     try {
       const title =
         result.items && result.items.length > 0
           ? result.items.map((it) => it.name).slice(0, 3).join(", ")
           : "Repas analysé";
 
-      await scanHistoryModel.addRecord({
+      const record = await scanHistoryModel.addRecord({
         userId: req.user.id,
         scanType: "photo",
         title,
@@ -36,6 +39,7 @@ const scanMeal = async (req, res) => {
         confidence: result.confidence,
         details: { items: result.items, note: result.note },
       });
+      scanHistoryId = record ? record.id : null;
     } catch (historyError) {
       console.error("Impossible d'enregistrer l'historique du scan photo:", historyError.message);
     }
@@ -43,6 +47,7 @@ const scanMeal = async (req, res) => {
     res.status(200).json({
       photoUrl,
       ...result,
+      scanHistoryId,
     });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur", error: error.message });

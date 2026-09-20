@@ -6,6 +6,8 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Pressable,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,8 +15,13 @@ import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
 import NutriScoreBadge from "@/components/nutrition/NutriScoreBadge";
 import EmptyState from "@/components/nutrition/EmptyState";
+import FavoriteButton from "@/components/nutrition/FavoriteButton";
+import PortionPicker from "@/components/nutrition/PortionPicker";
 import { getProductByBarcode } from "@/services/openFoodFacts.service";
+import { addMeal } from "@/services/meals.service";
 import { FoodProduct } from "@/types/nutrition";
+import { MealType, MEAL_TYPE_LABELS } from "@/types/meal";
+import { DEFAULT_PORTION_GRAMS, portionMealName, scaleNutrition } from "@/utils/portion";
 
 const NutrientRow = ({ label, value, unit }: { label: string; value: number | null; unit: string }) => (
   <View style={styles.nutrientRow}>
@@ -26,10 +33,20 @@ const NutrientRow = ({ label, value, unit }: { label: string; value: number | nu
 );
 
 export default function NutritionFoodDetailsScreen() {
-  const { barcode } = useLocalSearchParams<{ barcode: string }>();
+  const { barcode, mealType, date, source } = useLocalSearchParams<{
+    barcode: string;
+    mealType?: MealType;
+    date?: string;
+    /** D'où vient la navigation : "aliment" (recherche d'aliments) ou "barcode" (scan). */
+    source?: "aliment" | "barcode";
+  }>();
   const [product, setProduct] = useState<FoodProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [addingToTracking, setAddingToTracking] = useState(false);
+  const [addedToTracking, setAddedToTracking] = useState(false);
+  // Quantité mangée (en grammes) : les valeurs Open Food Facts sont « pour 100 g ».
+  const [grams, setGrams] = useState(DEFAULT_PORTION_GRAMS);
 
   const load = useCallback(async () => {
     if (!barcode) return;
@@ -54,9 +71,57 @@ export default function NutritionFoodDetailsScreen() {
     }, [load])
   );
 
+  const handleAddToTracking = async () => {
+    if (!product || !mealType || addingToTracking) return;
+    setAddingToTracking(true);
+    try {
+      // Calories et macros de la portion choisie (et non plus de 100 g).
+      const portion = scaleNutrition(product, grams);
+      await addMeal({
+        date: date || undefined,
+        mealType,
+        name: portionMealName(product.name, grams),
+        imageUrl: product.imageUrl,
+        calories: portion.calories,
+        protein: portion.protein,
+        carbs: portion.carbs,
+        fat: portion.fat,
+        source: "barcode",
+        barcode: product.id,
+      } as any);
+      setAddedToTracking(true);
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message || "Impossible d'ajouter cet aliment");
+    } finally {
+      setAddingToTracking(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
-      <ScreenHeader title="Détails de l'aliment" />
+      <ScreenHeader
+        title="Détails de l'aliment"
+        rightElement={
+          product ? (
+            <FavoriteButton
+              item={{
+                itemType: "food",
+                refId: product.id,
+                name: product.name,
+                imageUrl: product.imageUrl,
+                calories: product.caloriesPer100g,
+                protein: product.proteinPer100g,
+                carbs: product.carbsPer100g,
+                fat: product.fatPer100g,
+                nutriScore: product.nutriScore,
+                // On garde la vraie origine (recherche ou scan code-barres)
+                // plutôt que de forcer "aliment" pour tous les cas.
+                source: source === "barcode" ? "barcode" : "aliment",
+              }}
+            />
+          ) : undefined
+        }
+      />
 
       {loading ? (
         <View style={styles.centered}>
@@ -93,6 +158,40 @@ export default function NutritionFoodDetailsScreen() {
             </Text>
             <Text style={styles.caloriesLabel}>kcal / 100g</Text>
           </View>
+
+          {mealType ? (
+            <>
+              <Text style={styles.mealTypeHint}>
+                Ajout au repas : {MEAL_TYPE_LABELS[mealType]}
+              </Text>
+              <PortionPicker
+                product={product}
+                grams={grams}
+                onChange={setGrams}
+                disabled={addingToTracking || addedToTracking}
+              />
+              <Pressable
+                style={[styles.addTrackingBtn, addedToTracking && styles.addTrackingBtnDone]}
+                onPress={handleAddToTracking}
+                disabled={addingToTracking || addedToTracking}
+              >
+                {addingToTracking ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={addedToTracking ? "checkmark" : "add-circle-outline"}
+                      size={18}
+                      color="#fff"
+                    />
+                    <Text style={styles.addTrackingBtnText}>
+                      {addedToTracking ? "Ajouté au suivi" : "Ajouter à mon suivi"}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            </>
+          ) : null}
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Valeurs nutritionnelles (100g)</Text>
@@ -201,6 +300,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#EAF1FF",
     marginTop: 2,
+  },
+  mealTypeHint: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#407BFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  addTrackingBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 16,
+    paddingVertical: 13,
+    borderRadius: 14,
+    backgroundColor: "#407BFF",
+  },
+  addTrackingBtnDone: {
+    backgroundColor: "#1E8F4E",
+  },
+  addTrackingBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
   card: {
     backgroundColor: "#fff",

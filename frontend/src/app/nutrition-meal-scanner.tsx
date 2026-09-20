@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import ScreenHeader from "@/components/nutrition/ScreenHeader";
+import FavoriteButton from "@/components/nutrition/FavoriteButton";
 import { scanMealPhoto } from "@/services/mealScanner.service";
 import { getScanHistory } from "@/services/scanHistory.service";
 import { addMeal } from "@/services/meals.service";
@@ -250,15 +251,38 @@ export default function NutritionMealScannerScreen() {
               </View>
             </View>
 
-            <View
-              style={[
-                styles.confidenceBadge,
-                { backgroundColor: CONFIDENCE_COLOR[result.confidence] || "#94A3B8" },
-              ]}
-            >
-              <Text style={styles.confidenceText}>
-                {CONFIDENCE_LABEL[result.confidence] || "Confiance moyenne"}
-              </Text>
+            <View style={styles.badgeRow}>
+              <View
+                style={[
+                  styles.confidenceBadge,
+                  { backgroundColor: CONFIDENCE_COLOR[result.confidence] || "#94A3B8" },
+                ]}
+              >
+                <Text style={styles.confidenceText}>
+                  {CONFIDENCE_LABEL[result.confidence] || "Confiance moyenne"}
+                </Text>
+              </View>
+
+              <View style={styles.favoritePill}>
+                <FavoriteButton
+                  size={20}
+                  item={{
+                    itemType: "food",
+                    refId: result.scanHistoryId != null ? `scan:${result.scanHistoryId}` : null,
+                    name:
+                      result.items.length > 0
+                        ? result.items.map((i) => i.name).slice(0, 3).join(", ")
+                        : "Repas analysé par photo",
+                    imageUrl: result.photoUrl,
+                    calories: result.totalCalories,
+                    protein: result.totalProtein,
+                    carbs: result.totalCarbs,
+                    fat: result.totalFat,
+                    source: "photo",
+                  }}
+                />
+                <Text style={styles.favoritePillText}>Favoris</Text>
+              </View>
             </View>
 
             {result.items.length === 0 ? (
@@ -514,12 +538,31 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     marginTop: 2,
   },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
   confidenceBadge: {
-    alignSelf: "center",
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 999,
-    marginBottom: 14,
+  },
+  favoritePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "#FEF2F2",
+  },
+  favoritePillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#EF4444",
   },
   confidenceText: {
     color: "#fff",

@@ -2,13 +2,16 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MealSummary } from "@/types/nutrition";
+import FavoriteButton from "./FavoriteButton";
 
 type Props = {
   meal: MealSummary;
   onPress: () => void;
+  /** Affiche un cœur permettant d'ajouter directement le repas aux favoris. */
+  showFavorite?: boolean;
 };
 
-export default function MealListItem({ meal, onPress }: Props) {
+export default function MealListItem({ meal, onPress, showFavorite }: Props) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
       {meal.thumbnail ? (
@@ -35,7 +38,21 @@ export default function MealListItem({ meal, onPress }: Props) {
           ) : null}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
+      {showFavorite ? (
+        <FavoriteButton
+          style={styles.favoriteBtn}
+          size={20}
+          item={{
+            itemType: "recipe",
+            refId: meal.id,
+            name: meal.name,
+            imageUrl: meal.thumbnail,
+            source: "repas",
+          }}
+        />
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
+      )}
     </Pressable>
   );
 }
@@ -92,5 +109,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: "#407BFF",
+  },
+  favoriteBtn: {
+    marginLeft: 4,
   },
 });

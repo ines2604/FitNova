@@ -13,6 +13,12 @@ const chatbotRoutes = require("./routes/chatbot.routes");
 const reminderRoutes = require("./routes/reminder.routes");
 const nutritionRoutes = require("./routes/nutrition.routes");
 const mealRoutes = require("./routes/meal.routes");
+const favoriteRoutes = require("./routes/favorite.routes");
+const progressPhotoRoutes = require("./routes/progressPhoto.routes");
+const fastingRoutes = require("./routes/fasting.routes");
+const exerciseRoutes = require("./routes/exercise.routes");
+const workoutSessionRoutes = require("./routes/workoutSession.routes");
+const scheduledSessionRoutes = require("./routes/scheduledSession.routes");
 
 const { notFound, errorHandler } = require("./middlewares/error.middleware");
 
@@ -36,6 +42,15 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/meals", mealRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/progress-photos", progressPhotoRoutes);
+app.use("/api/fasting", fastingRoutes);
+
+// Module Sport
+app.use("/api/exercises", exerciseRoutes); // catalogue d'exercices (wger)
+app.use("/api/sessions", workoutSessionRoutes); // séances d'entraînement
+app.use("/api/calendar", scheduledSessionRoutes); // planning + historique des séances
+
 app.use(notFound);
 app.use(errorHandler);
 

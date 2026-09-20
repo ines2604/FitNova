@@ -198,15 +198,193 @@ export async function cancelReminderNotifications(reminderId: number) {
   await saveScheduleMap(map);
 }
 
-// Annule tout, par exemple à la déconnexion de l'utilisateur.
-export async function cancelAllReminderNotifications() {
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  await AsyncStorage.removeItem(STORAGE_KEY);
+// ============ Notifications de jeûne ============
+// Un jeûne n'a jamais qu'une seule notification de fin programmée à la fois
+// (le stockage garde juste le dernier id par jeûne, pas un historique).
+const FASTING_STORAGE_KEY = "@fitnova_fasting_notification_ids";
+
+type FastingScheduleMap = Record<string, string[]>;
+
+async function loadFastingScheduleMap(): Promise<FastingScheduleMap> {
+  try {
+    const raw = await AsyncStorage.getItem(FASTING_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as FastingScheduleMap) : {};
+  } catch {
+    return {};
+  }
 }
 
-export async function resetNotifications() {
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  await AsyncStorage.removeItem(STORAGE_KEY);
+async function saveFastingScheduleMap(map: FastingScheduleMap) {
+  await AsyncStorage.setItem(FASTING_STORAGE_KEY, JSON.stringify(map));
+}
 
-  console.log("🗑️ Toutes les notifications ont été supprimées");
+/**
+ * Notifie immédiatement le début d'un jeûne (appelé juste après le démarrage
+ * côté serveur), et programme une notification à l'heure de fin prévue.
+ */
+export async function notifyFastStarted(fastId: number, endAt: Date) {
+  const granted = await ensureNotificationPermission();
+  if (!granted) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "🔥 Jeûne commencé",
+      body: "Ton jeûne a démarré. Courage, tu peux le faire !",
+      sound: true,
+    },
+    trigger: null, // immédiat
+  });
+
+  await scheduleFastEndNotification(fastId, endAt);
+}
+
+/**
+ * Notifie immédiatement que le jeûne vient d'être clôturé par l'utilisateur
+ * (appelé juste après « Terminer » côté serveur). Ne lève jamais d'erreur :
+ * une notification qui échoue ne doit pas faire croire que la fin du jeûne
+ * a échoué alors qu'elle est déjà enregistrée.
+ */
+export async function notifyFastCompleted() {
+  try {
+    const granted = await ensureNotificationPermission();
+    if (!granted) return;
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "🎉 Jeûne terminé",
+        body: "Bravo, ton jeûne est enregistré. Pense à bien t'hydrater et à reprendre en douceur.",
+        sound: true,
+      },
+      trigger: null, // immédiat
+    });
+  } catch (error) {
+    console.warn("Erreur de notification (jeûne terminé) :", error);
+  }
+}
+
+/** Programme (ou reprogramme) la notification de fin de jeûne. */
+export async function scheduleFastEndNotification(fastId: number, endAt: Date) {
+  const granted = await ensureNotificationPermission();
+  const map = await loadFastingScheduleMap();
+
+  await cancelIds(map[String(fastId)] || []);
+  delete map[String(fastId)];
+
+  if (granted && endAt.getTime() > Date.now()) {
+    try {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🎉 Jeûne terminé",
+          body: "Bravo, la durée de ton jeûne est atteinte ! Tu peux le clôturer.",
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: endAt,
+        },
+      });
+      map[String(fastId)] = [id];
+    } catch (error) {
+      console.warn("Erreur de programmation notification (fin de jeûne) :", error);
+    }
+  }
+
+  await saveFastingScheduleMap(map);
+}
+
+/** Annule la notification de fin programmée pour un jeûne (terminé/annulé manuellement). */
+export async function cancelFastNotifications(fastId: number) {
+  const map = await loadFastingScheduleMap();
+  await cancelIds(map[String(fastId)] || []);
+  delete map[String(fastId)];
+  await saveFastingScheduleMap(map);
+}
+
+// ============ Notifications séances sport ============
+const WORKOUT_STORAGE_KEY = "@fitnova_workout_notification_ids";
+const WORKOUT_REMINDER_MINUTES_BEFORE = 30;
+
+type WorkoutScheduleMap = Record<string, string[]>;
+
+async function loadWorkoutScheduleMap(): Promise<WorkoutScheduleMap> {
+  try {
+    const raw = await AsyncStorage.getItem(WORKOUT_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as WorkoutScheduleMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function saveWorkoutScheduleMap(map: WorkoutScheduleMap) {
+  await AsyncStorage.setItem(WORKOUT_STORAGE_KEY, JSON.stringify(map));
+}
+
+/** Rappel 30 min avant le début planifié (`scheduled_sessions.id`). */
+export async function scheduleWorkoutReminder(
+  scheduledSessionId: number,
+  sessionName: string,
+  startAt: Date
+) {
+  const granted = await ensureNotificationPermission();
+  const map = await loadWorkoutScheduleMap();
+
+  await cancelIds(map[String(scheduledSessionId)] || []);
+  delete map[String(scheduledSessionId)];
+
+  const notifyAt = new Date(startAt.getTime() - WORKOUT_REMINDER_MINUTES_BEFORE * 60 * 1000);
+
+  if (granted && notifyAt.getTime() > Date.now()) {
+    try {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🏋️ Séance dans 30 minutes",
+          body: `${sessionName} commence bientôt, prépare-toi !`,
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: notifyAt,
+        },
+      });
+      map[String(scheduledSessionId)] = [id];
+    } catch (error) {
+      console.warn("Erreur de programmation notification (séance) :", error);
+    }
+  }
+
+  await saveWorkoutScheduleMap(map);
+}
+
+export async function cancelWorkoutReminder(scheduledSessionId: number) {
+  const map = await loadWorkoutScheduleMap();
+  await cancelIds(map[String(scheduledSessionId)] || []);
+  delete map[String(scheduledSessionId)];
+  await saveWorkoutScheduleMap(map);
+}
+
+// ============ Déconnexion ============
+// À appeler à la déconnexion (et quand la session expire) : annule TOUTES les
+// notifications programmées — rappels (eau, activité, sommeil), fin de jeûne et
+// rappels de séance — et efface les identifiants mémorisés pour chacune.
+// Sans ça, les notifications de l'ancien compte continuent de sonner après la
+// déconnexion (elles sont programmées sur le téléphone, pas sur le serveur).
+// Au prochain login, syncReminderNotifications() reprogramme uniquement les
+// rappels du nouvel utilisateur.
+export async function cancelAllNotifications() {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch (error) {
+    console.warn("Erreur d'annulation des notifications programmées :", error);
+  }
+  try {
+    // Retire aussi de la barre de notifications celles déjà reçues.
+    await Notifications.dismissAllNotificationsAsync();
+  } catch (error) {
+    console.warn("Erreur de suppression des notifications affichées :", error);
+  }
+  await AsyncStorage.multiRemove([
+    STORAGE_KEY,
+    FASTING_STORAGE_KEY,
+    WORKOUT_STORAGE_KEY,
+  ]);
 }

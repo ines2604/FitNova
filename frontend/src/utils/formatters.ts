@@ -1,9 +1,21 @@
 import { ActivityLevel, Gender, Goal } from "../types/profile";
 
-export const formatDate = (date: Date) => date.toISOString().split("T")[0];
+// "AAAA-MM-JJ" en heure LOCALE. Ne pas utiliser toISOString() : il donne la
+// date UTC, donc la veille entre minuit et 1h du matin en Tunisie (UTC+1).
+export const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export const formatDisplayDate = (dateStr: string) => {
-  const date = new Date(`${dateStr}T12:00:00`);
+  // `dateStr` peut être soit une simple date "AAAA-MM-JJ", soit une chaîne
+  // ISO complète renvoyée par MySQL pour une colonne DATE (ex. via l'API
+  // photos de progression) : on ne garde que la partie date, à midi local,
+  // pour éviter tout décalage de fuseau horaire.
+  const datePart = dateStr.slice(0, 10);
+  const date = new Date(`${datePart}T12:00:00`);
   return date.toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",

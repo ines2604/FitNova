@@ -3,13 +3,16 @@ import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FoodProduct } from "@/types/nutrition";
 import NutriScoreBadge from "./NutriScoreBadge";
+import FavoriteButton from "./FavoriteButton";
 
 type Props = {
   food: FoodProduct;
   onPress: () => void;
+  /** Affiche un cœur permettant d'ajouter directement l'aliment aux favoris. */
+  showFavorite?: boolean;
 };
 
-export default function FoodListItem({ food, onPress }: Props) {
+export default function FoodListItem({ food, onPress, showFavorite }: Props) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
       {food.imageUrl ? (
@@ -37,6 +40,25 @@ export default function FoodListItem({ food, onPress }: Props) {
       </View>
 
       <NutriScoreBadge score={food.nutriScore} />
+
+      {showFavorite ? (
+        <FavoriteButton
+          style={styles.favoriteBtn}
+          size={20}
+          item={{
+            itemType: "food",
+            refId: food.id,
+            name: food.name,
+            imageUrl: food.imageUrl,
+            calories: food.caloriesPer100g,
+            protein: food.proteinPer100g,
+            carbs: food.carbsPer100g,
+            fat: food.fatPer100g,
+            nutriScore: food.nutriScore,
+            source: "aliment",
+          }}
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -85,5 +107,8 @@ const styles = StyleSheet.create({
     color: "#407BFF",
     fontWeight: "600",
     marginTop: 4,
+  },
+  favoriteBtn: {
+    marginLeft: 8,
   },
 });

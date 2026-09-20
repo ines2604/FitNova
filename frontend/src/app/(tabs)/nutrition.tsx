@@ -69,6 +69,14 @@ const Nutrition = () => {
           color="#9B5DE5"
           onPress={() => router.push("/nutrition-meal-scanner")}
         />
+
+        <NutritionCard
+          icon="heart"
+          title="Favoris"
+          subtitle="Retrouve les aliments et repas que tu as enregistrés"
+          color="#EF4444"
+          onPress={() => router.push("/nutrition-favorites")}
+        />
       </ScrollView>
     </SafeAreaView>
   );

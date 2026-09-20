@@ -258,7 +258,8 @@ const Home = () => {
             goalSteps={stepGoal}
             caloriesBurned={
               isToday
-                ? stepTracker.caloriesBurned
+                ? stepTracker.caloriesBurned +
+                  (tracking?.workout_calories_burned || 0)
                 : tracking?.calories_burned || 0
             }
             caloriesSource={stepTracker.caloriesSource}

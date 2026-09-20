@@ -1,10 +1,24 @@
 const dailyTrackingModel = require("../models/dailyTracking.model");
+const scheduledSessionModel = require("../models/scheduledSession.model");
 
 // Date du jour en heure locale de Tunisie
 const today = () => {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Tunis",
   }).format(new Date());
+};
+
+const withWorkoutCalories = async (userId, tracking) => {
+  if (!tracking) return tracking;
+  const date = String(tracking.date).slice(0, 10);
+  const workoutCalories = await scheduledSessionModel.sumCaloriesBurnedForDate(
+    userId,
+    date
+  );
+  return {
+    ...tracking,
+    workout_calories_burned: workoutCalories,
+  };
 };
 
 // GET /api/tracking?date=YYYY-MM-DD
@@ -17,7 +31,7 @@ const getDailyTracking = async (req, res) => {
       date
     );
 
-    res.status(200).json(tracking);
+    res.status(200).json(await withWorkoutCalories(req.user.id, tracking));
   } catch (error) {
     console.error("Erreur getDailyTracking :", error);
 
@@ -52,7 +66,7 @@ const logWater = async (req, res) => {
       trackingDate
     );
 
-    res.status(200).json(tracking);
+    res.status(200).json(await withWorkoutCalories(req.user.id, tracking));
   } catch (error) {
     console.error("Erreur logWater :", error);
 
@@ -88,7 +102,7 @@ const logSteps = async (req, res) => {
       trackingDate
     );
 
-    res.status(200).json(tracking);
+    res.status(200).json(await withWorkoutCalories(req.user.id, tracking));
   } catch (error) {
     console.error("Erreur logSteps :", error);
 
@@ -111,12 +125,10 @@ const logCaloriesBurned = async (req, res) => {
       });
     }
 
-    await dailyTrackingModel.updateFields(
+    await scheduledSessionModel.syncDailyCaloriesBurned(
       req.user.id,
       trackingDate,
-      {
-        calories_burned: Number(calories),
-      }
+      Number(calories)
     );
 
     const tracking = await dailyTrackingModel.getByDate(
@@ -124,7 +136,7 @@ const logCaloriesBurned = async (req, res) => {
       trackingDate
     );
 
-    res.status(200).json(tracking);
+    res.status(200).json(await withWorkoutCalories(req.user.id, tracking));
   } catch (error) {
     console.error("Erreur logCaloriesBurned :", error);
 
@@ -229,7 +241,7 @@ const logSleep = async (req, res) => {
 
     console.log("Sommeil enregistré :", tracking);
 
-    res.status(200).json(tracking);
+    res.status(200).json(await withWorkoutCalories(req.user.id, tracking));
   } catch (error) {
     console.error("Erreur logSleep :", error);
 
