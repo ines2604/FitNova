@@ -376,6 +376,7 @@ EXPO_PUBLIC_API_URL
 
 ## 📚 Documentation détaillée
 
+- 🎨 [`frontend/README.md`](./frontend/README.md) — structure de l'application mobile, écrans, navigation, composants, services et installation
 - ⚙️ [`backend/README.md`](./backend/README.md) — endpoints de l'API, modèle de données, middlewares, services, fuseau horaire, dépannage
 
 ---
