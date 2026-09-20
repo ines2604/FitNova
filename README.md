@@ -1,12 +1,12 @@
 # 🏋️‍♀️ FitNova
 
-**FitNova** est une application mobile de fitness et de nutrition complète, développée avec une architecture **full-stack moderne** :
+**FitNova** est une application mobile de fitness et de bien-être complète, développée avec une architecture **full-stack moderne** :
 
 - 📱 **Frontend** : React Native + Expo (Expo Router, TypeScript)
 - ⚙️ **Backend** : Node.js + Express
 - 🗄️ **Base de données** : MySQL
 
-L'application permet à l'utilisateur de suivre son alimentation, son hydratation, son sommeil, ses pas, son poids/IMC, ses jeûnes et ses entraînements, de générer des séances de sport avec l'IA et de dialoguer avec un chatbot santé/fitness — le tout depuis un tableau de bord unique et personnalisé.
+L'application permet à l'utilisateur de suivre son alimentation, son hydratation, son sommeil, ses pas, son poids/IMC, ses jeûnes et ses entraînements, de générer des séances de sport avec l'IA et de dialoguer avec un chatbot santé/fitness — le tout depuis six onglets principaux : **Accueil, Nutrition, Jeûne, Sport, Chatbot, Profil**.
 
 ---
 
@@ -17,6 +17,7 @@ L'application permet à l'utilisateur de suivre son alimentation, son hydratatio
 - [Architecture générale](#-architecture-générale)
 - [Structure du dépôt](#-structure-du-dépôt)
 - [Stack technique](#-stack-technique)
+- [Aperçu de l'API](#-aperçu-de-lapi)
 - [Modèle de données](#-modèle-de-données)
 - [Démarrage rapide](#-démarrage-rapide)
 - [Variables d'environnement](#-variables-denvironnement)
@@ -30,17 +31,17 @@ L'application permet à l'utilisateur de suivre son alimentation, son hydratatio
 
 ## 🎯 Vision du projet
 
-FitNova a pour objectif de proposer une expérience de suivi de fitness **simple, rapide et intelligente**, en évitant la friction habituelle de la saisie manuelle de données nutritionnelles. Trois piliers guident les choix produit :
+FitNova a pour objectif de proposer une expérience de suivi de fitness **simple, rapide et intelligente**, en évitant la friction habituelle de la saisie manuelle. Quatre piliers guident les choix produit :
 
-1. **Zéro friction de saisie** :  scan de code-barres (OpenFoodFacts), analyse de repas par photo (IA) et pas récupérés automatiquement depuis le capteur / Health Connect plutôt que saisis à la main.
-2. **Vue consolidée** : une page d'accueil unique qui centralise calories, macros, eau, sommeil et repas du jour, sans naviguer entre plusieurs écrans.
+1. **Zéro friction de saisie** : scan de code-barres (OpenFoodFacts), analyse de repas par photo (IA) et pas récupérés automatiquement depuis le capteur / Health Connect plutôt que saisis à la main.
+2. **Vue consolidée** : une page d'accueil unique qui centralise calories, macros, eau, sommeil, pas et repas du jour.
 3. **Accompagnement intelligent** : un chatbot santé/fitness et un générateur de séances de sport par IA aident l'utilisateur à progresser et à rester motivé.
 4. **Suivi long terme** : graphiques d'évolution (poids, calories, pas, jeûne, durée des séances) et photos de progression.
 
 ---
 
 ## ✨ Aperçu des fonctionnalités
- 
+
 ### 🔐 Authentification & compte
 - Inscription / connexion par e-mail + mot de passe, avec vérification par **OTP** (code à 6 chiffres, valable 10 minutes) envoyé par e-mail
 - Mot de passe fort exigé : 8 caractères minimum, avec une majuscule, un chiffre et un caractère spécial
@@ -50,7 +51,7 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 - Écrans d'accueil (`welcome`), d'onboarding (`Onboarding`) et assistant de complétion de profil en plusieurs étapes (âge, sexe, taille, poids, niveau d'activité, objectif, objectif d'eau, objectif de pas)
 
 ### 🏠 Accueil (Home)
-- Salutation dynamique avec prénom et photo de profil
+- Salutation dynamique ("Bonjour" de 5 h à 17 h 59, "Bonsoir" le reste du temps) avec prénom et photo de profil
 - Résumé calorique et macros du jour (glucides / protéines / lipides)
 - Suivi de l'hydratation (ajout/retrait, protection contre les valeurs négatives)
 - Suivi du sommeil (heure de coucher / réveil, calcul automatique de la durée)
@@ -64,21 +65,21 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 - Scanner de repas par photo, analysé par IA (Gemini) : aliments détectés, portions, macros, niveau de confiance et note
 - Historique complet des scans (code-barres + photo), avec écran de détail
 - Détails aliment / repas et choix de la portion avant ajout au journal
-- **Favoris** : aliments et recettes peuvent être mis en favoris et retrouvés dans des écrans dédiés
+- **Favoris** : aliments, recettes et exercices peuvent être mis en favoris et retrouvés dans des écrans dédiés
 
 ### ⏳ Jeûne
-- Planification d'un jeûne (date, heure de début future, durée en heures — 16 h par défaut) 
+- Planification d'un jeûne (date, heure de début future, durée en heures — 16 h par défaut) ou démarrage immédiat
 - Suivi en direct avec anneau de progression, fin ou annulation du jeûne
 - Statuts : `planned`, `active`, `completed`, `cancelled`
 - Un seul jeûne planifié ou en cours par jour
-- Annulation automatique des jeûnes planifiés non démarrés une fois leur fenêtre dépassée
+- Annulation automatique des jeûnes planifiés non démarrés une fois leur fenêtre dépassée ; un jeûne actif reste terminable pendant 12 h après la fin prévue, puis est annulé en conservant la durée prévue
 - Calendrier mensuel avec détail par jour, statistiques d'heures de jeûne et écran de conseils
 - Notifications locales au démarrage, à la fin prévue et à la complétion
 
 ### 💪 Sport
-- **Catalogue d'exercices** (1 324 exercices issus du dataset [exercises-dataset](https://github.com/shahanbutt/exercises-dataset)) : filtres par partie du corps, équipement et muscle ciblé, fiche détaillée avec image/GIF et instructions
+- **Catalogue d'exercices** (1 324 exercices issus du dataset [exercises-dataset](https://github.com/shahanbutt/exercises-dataset)) : recherche par nom, filtres par partie du corps et par équipement, fiche détaillée avec image/GIF et instructions en français
 - **Séances personnalisées** : création, renommage, ajout / suppression / remplacement / réordonnancement des exercices, avec séries, durée de travail et repos par exercice
-- **Générateur de séances par IA** (Gemini) selon l'objectif (perte de poids, prise de muscle, entretien), le niveau, le lieu (poids du corps à la maison, avec matériel, salle), le focus (full body, haut, bas du corps, abdos) et la durée (10 à 90 min).
+- **Générateur de séances par IA** (Gemini) selon l'objectif (perte de poids, prise de muscle, entretien), le niveau, le lieu (poids du corps à la maison, avec matériel, salle), le focus (full body, haut, bas du corps, abdos) et la durée (10 à 90 min). Les réponses de l'IA sont revalidées et bornées ; en cas d'indisponibilité, le backend bascule sur une génération par règles
 - **Calendrier / planning** : planification d'une séance à une date et une heure (un seul créneau par date/heure), démarrage immédiat, écran de séance active avec pause, fin ou annulation
 - Statuts : `planned`, `in_progress`, `paused`, `completed`, `cancelled`, `missed`
 - Historique des séances, statistiques de durée et **calories brûlées estimées** (formule MET × poids), ajoutées au suivi quotidien
@@ -86,7 +87,7 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 
 ### 💬 Chatbot santé/fitness
 - Conversations multiples avec historique
-- Suppression de conversations
+- Création, renommage et suppression de conversations
 - Réponses contextualisées grâce à l'IA (Google Gemini), recentrées sur la nutrition, l'activité physique, le sommeil, l'hydratation et le bien-être (sans diagnostic ni prescription médicale)
 
 ### 👤 Profil & suivi long terme
@@ -117,8 +118,8 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
                                                      ┌───────────────────────┼───────────────────────┐
                                                      ▼                       ▼                       ▼
                                               ┌─────────────┐        ┌─────────────┐         ┌──────────────┐
-                                              │   MySQL     │        │  Google     │         │ OpenFoodFacts │
-                                              │  Database   │        │  Gemini API │         │      API      │
+                                              │   MySQL     │        │  Google     │         │  Nodemailer   │
+                                              │  Database   │        │  Gemini API │         │  (SMTP, OTP)  │
                                               └─────────────┘        └─────────────┘         └──────────────┘
 ```
 
@@ -131,7 +132,7 @@ FitNova a pour objectif de proposer une expérience de suivi de fitness **simple
 ---
 
 ## 📁 Structure du dépôt
- 
+
 ```
 FitNova/
 ├── frontend/                  # Application mobile React Native / Expo
@@ -161,13 +162,13 @@ FitNova/
 │   ├── uploads/                # Fichiers uploadés (photos)
 │   └── server.js               # Point d'entrée de l'API
 │
-└── README.md                   # 📄 Ce fichier — vue d'ensemble du projet
+└── README.md                   # Ce fichier
 ```
 
 ---
 
 ## 🛠️ Stack technique
- 
+
 | Domaine | Technologies |
 |---|---|
 | **Frontend mobile** | React Native 0.85, React 19, Expo SDK 56, Expo Router, TypeScript |
@@ -184,13 +185,37 @@ FitNova/
 | **Sécurité** | bcryptjs (hash mots de passe), JWT, limitation des essais OTP |
 | **E-mail** | Nodemailer (envoi des OTP) |
 | **Upload fichiers** | Multer (jpeg, jpg, png, webp — 5 Mo max) |
- 
+
+---
+
+## 🔌 Aperçu de l'API
+
+Toutes les routes, sauf `/api/auth/*`, sont protégées par le middleware `protect` (JWT).
+
+| Préfixe | Rôle |
+|---|---|
+| `/api/auth` | Inscription, vérification e-mail, renvoi d'OTP, connexion, connexion Google, mot de passe oublié / réinitialisation |
+| `/api/users` | Utilisateur connecté (`/me`), mise à jour et photo de profil |
+| `/api/profile` | Création / lecture / mise à jour du profil, historique de poids |
+| `/api/dashboard` | Vue d'ensemble : suivi des N derniers jours + progression du poids |
+| `/api/tracking` | Suivi quotidien : eau, pas, calories brûlées, sommeil |
+| `/api/meals` | Journal de repas (liste, ajout, suppression) |
+| `/api/nutrition` | Analyse de repas par photo (`/scan-meal`) et historique des scans (`/history`) |
+| `/api/favorites` | Favoris (aliments, recettes, exercices) |
+| `/api/progress-photos` | Photos de progression |
+| `/api/fasting` | Jeûne : en cours, calendrier, statistiques, planification, démarrage, fin, annulation |
+| `/api/exercises` | Catalogue d'exercices : liste filtrable, options de filtres, favoris, détail |
+| `/api/sessions` | Séances d'entraînement : CRUD, gestion des exercices, réordonnancement, génération IA (`/generate`) |
+| `/api/calendar` | Planning des séances : planification, démarrage, pause, annulation, fin, historique, statistiques de durée |
+| `/api/chatbot` | Conversations et messages du chatbot |
+| `/api/reminders` | Rappels personnalisés |
+
 ---
 
 ## 🗄️ Modèle de données
- 
+
 Tables de la base MySQL :
- 
+
 | Table | Rôle | Création |
 |---|---|---|
 | `users` | Comptes utilisateurs (identifiants, e-mail, mot de passe hashé, Google ID) | Manuelle |
@@ -210,7 +235,7 @@ Tables de la base MySQL :
 | `workout_sessions` / `session_exercises` | Séances d'entraînement et leurs exercices | Automatique |
 | `scheduled_sessions` | Séances planifiées, en cours et terminées (planning + historique) | Automatique |
 
-> Le détail des colonnes, contraintes et migrations est documenté dans le [README backend](./backend/README.md#-modèle-de-données).
+> **Création des tables** : les tables marquées « Automatique » sont créées (et migrées) au premier accès par la fonction `ensureTable()` de leur modèle (`CREATE TABLE IF NOT EXISTS`). Les tables marquées « Manuelle » doivent être créées à l'avance dans la base : le dépôt ne contient pas de script SQL pour elles.
 
 ---
 
@@ -218,9 +243,10 @@ Tables de la base MySQL :
 
 ### Prérequis
 - Node.js ≥ 18
-- MySQL ≥ 8
-- Expo CLI (`npm install -g expo-cli` ou usage via `npx`)
+- MySQL ≥ 8 (ou MariaDB)
 - Un appareil physique avec un **development build** (voir ci-dessous), ou un émulateur Android/iOS
+
+> ℹ️ Le projet utilise des modules natifs (`react-native-health-connect`, Google Sign-In, `expo-dev-client`) : il **ne fonctionne pas dans Expo Go** et nécessite un development build (`npm run android` / `npm run ios`, ou un build EAS `development`).
 
 ### 1. Cloner le dépôt
 ```bash
@@ -232,44 +258,63 @@ cd FitNova
 ```bash
 cd backend
 npm install
-cp .env.example .env   # puis renseigner les variables (voir README backend)
+# créer le fichier .env (voir la section « Variables d'environnement »)
 npm run dev             # démarre sur http://localhost:5000 (nodemon)
 ```
+
+Créer ensuite la base de données et les tables « manuelles » (voir [Modèle de données](#-modèle-de-données)), puis importer le catalogue d'exercices :
+```bash
+node scripts/importExercises.js                    # télécharge exercises.json depuis GitHub
+node scripts/importExercises.js ./exercises.json   # ou utilise un fichier local
+```
+L'import est idempotent : relancer la commande met à jour les lignes existantes.
 
 ### 3. Configurer et lancer le frontend
 ```bash
 cd frontend
 npm install
-cp .env.example .env    # renseigner EXPO_PUBLIC_API_URL et les clés Google
-npm start                # ouvre l'interface Expo (Metro Bundler)
+# créer le fichier .env (voir la section « Variables d'environnement »)
+npm start                # démarre Metro (expo start)
 ```
 
-Scanner le QR code avec **Expo Go**, ou lancer sur émulateur :
+Lancer sur un appareil ou un émulateur :
 ```bash
 npm run android
 npm run ios
 ```
 
-> 📌 Pour tester sur un appareil physique, `EXPO_PUBLIC_API_URL` doit pointer vers l'IP locale de la machine hébergeant le backend (et non `localhost`).
+> 📌 Pour tester sur un appareil physique, `EXPO_PUBLIC_API_URL` doit pointer vers l'IP locale de la machine hébergeant le backend, suffixe `/api` compris (ex. `http://192.168.1.10:5000/api`) — et non `localhost`.
 
 ---
 
 ## 🔑 Variables d'environnement
 
-Un aperçu global (le détail complet est dans les README dédiés) :
-
 **Backend (`backend/.env`)**
 ```
+# Serveur
 PORT, NODE_ENV
+
+# Base de données
 DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+
+# JWT
 JWT_SECRET, JWT_EXPIRES_IN
+
+# E-mail (Nodemailer)
 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
-OTP_LENGTH, OTP_EXPIRES_MINUTES
+
+# Google Sign-In
 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_ID_ANDROID
-UPLOAD_PATH
+
+# IA (Gemini)
 GEMINI_API_KEY
-CLIENT_URL
+
+# Optionnelles
+GEMINI_WORKOUT_MODEL        # modèle Gemini utilisé pour générer les séances
+EXERCISE_MEDIA_BASE_URL     # hébergement des images/GIF d'exercices (par défaut : dépôt GitHub du dataset)
 ```
+
+> ℹ️ `OTP_LENGTH`, `OTP_EXPIRES_MINUTES`, `UPLOAD_PATH` et `CLIENT_URL` ne sont pas lues par le code actuel : le code OTP fait toujours 6 chiffres et expire après 10 minutes, et les uploads vont dans `backend/uploads`. Inutile de les définir, sauf si le code est modifié pour les utiliser.
 
 **Frontend (`frontend/.env`)**
 ```
@@ -278,12 +323,12 @@ EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
 EXPO_PUBLIC_API_URL
 ```
 
-⚠️ Ne jamais committer les fichiers `.env` réels ni les clés `.jks` de signature Android — seuls des fichiers `.env.example` (sans valeurs sensibles) doivent être versionnés.
+⚠️ Ne jamais committer les fichiers `.env` réels ni les clés `.jks` de signature Android : ils sont ignorés par les `.gitignore`, mais doivent aussi être exclus de toute archive (`.zip`) partagée du projet.
 
 ---
 
 ## 🔐 Flux d'authentification
- 
+
 1. L'utilisateur s'inscrit (`/api/auth/register`) → un OTP est envoyé par e-mail.
 2. Vérification du code (`/api/auth/verify-email`, ou `/api/auth/resend-otp` pour en recevoir un nouveau) → le compte est activé.
 3. Connexion (`/api/auth/login` ou `/api/auth/google`) → un **JWT** est renvoyé et stocké côté client (AsyncStorage).
@@ -295,7 +340,7 @@ EXPO_PUBLIC_API_URL
 ---
 
 ## 📐 Conventions & bonnes pratiques
- 
+
 - **Architecture en couches côté backend** : `routes → controllers → models → MySQL`, avec `services/` pour la logique métier réutilisable (BMI, objectif calorique, OTP, e-mail, chatbot, scanner IA, générateur de séances) et `utils/` pour les fonctions pures (planificateur de séances, calories, fuseau horaire).
 - **Client API centralisé côté frontend** : une seule instance Axios (`services/api.ts`) avec intercepteurs (ajout du JWT, normalisation des erreurs), complétée par des services dédiés par domaine (`meals.service.ts`, `tracking.service.ts`, `fasting.service.ts`, `sessions.service.ts`, `calendar.service.ts`...). Le frontend utilise l'alias d'import `@/` pour `src/`.
 - **Composants réutilisables** : `ScreenHeader`, `NutriScoreBadge`, `EmptyState`, `Chip`, etc., partagés entre les écrans.
@@ -305,10 +350,11 @@ EXPO_PUBLIC_API_URL
 - **IA avec garde-fous** : les sorties de Gemini (séances, analyse de repas) sont validées et bornées ; la génération de séances retombe sur des règles si l'IA est indisponible, trop lente ou incohérente.
 - **États calculés à la lecture** : il n'y a pas de tâche planifiée (cron) — l'expiration des jeûnes et des séances non démarrées est appliquée à la lecture des données.
 - **Audit avant implémentation** : toute nouvelle fonctionnalité commence par un audit complet du code existant (modèles, contrôleurs, routes, services, types, composants) avant modification.
+
 ---
 
 ## 🗺️ Feuille de route
- 
+
 - [x] Authentification complète (e-mail/OTP + Google)
 - [x] Suivi eau, sommeil, pas, poids/IMC
 - [x] Scanner code-barres (OpenFoodFacts) + Nutri-Score
@@ -330,11 +376,10 @@ EXPO_PUBLIC_API_URL
 
 ## 📚 Documentation détaillée
 
-- 📱 [`frontend/README.md`](./frontend/README.md) — installation, architecture des écrans, composants, services API, conventions React Native/Expo
-- ⚙️ [`backend/README.md`](./backend/README.md) — endpoints de l'API, modèles de données, middlewares, intégrations externes, déploiement
+- ⚙️ [`backend/README.md`](./backend/README.md) — endpoints de l'API, modèle de données, middlewares, services, fuseau horaire, dépannage
 
 ---
 
 ## 👩‍💻 Auteure
- 
+
 Projet développé par **Ines Jaziri** dans le cadre du développement de l'application mobile **FitNova**.
